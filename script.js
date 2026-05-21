@@ -1,40 +1,4 @@
-const respostes = [
-  {
-    id: 1,
-    grup: "DAW1A",
-    puntuacio: 4,
-    comentari: "Tot clar, la practica ha estat facil de seguir.",
-    data: "2026-05-21T09:10:00"
-  },
-  {
-    id: 2,
-    grup: "DAW1B",
-    puntuacio: 5,
-    comentari: "M'ha agradat treballar amb exemples visuals.",
-    data: "2026-05-21T09:25:00"
-  },
-  {
-    id: 3,
-    grup: "ASIX1",
-    puntuacio: 3,
-    comentari: "Caldria repetir la part de grafiques.",
-    data: "2026-05-21T09:45:00"
-  },
-  {
-    id: 4,
-    grup: "DAW1A",
-    puntuacio: 2,
-    comentari: "M'ha costat una mica la validacio.",
-    data: "2026-05-21T10:05:00"
-  },
-  {
-    id: 5,
-    grup: "DAW1B",
-    puntuacio: 4,
-    comentari: "",
-    data: "2026-05-21T10:20:00"
-  }
-];
+let respostes = [];
 
 const groups = ["DAW1A", "DAW1B", "ASIX1"];
 const scoreColors = ["#ef4444", "#f97316", "#f59e0b", "#22c55e", "#2563eb"];
@@ -45,6 +9,7 @@ const scoreInput = document.querySelector("#score");
 const commentInput = document.querySelector("#comment");
 const formMessage = document.querySelector("#formMessage");
 const groupFilter = document.querySelector("#groupFilter");
+const submitButton = form.querySelector("button");
 
 const activeFilterText = document.querySelector("#activeFilterText");
 const totalResponses = document.querySelector("#totalResponses");
@@ -59,11 +24,54 @@ const positiveLegend = document.querySelector("#positiveLegend");
 const groupComparison = document.querySelector("#groupComparison");
 const responsesList = document.querySelector("#responsesList");
 
+const config = window.SUPABASE_CONFIG || {};
+const supabaseUrl = config.url;
+const supabaseAnonKey = config.anonKey;
+const supabaseClient = supabaseUrl && supabaseAnonKey && window.supabase
+  ? window.supabase.createClient(supabaseUrl, supabaseAnonKey)
+  : null;
+
 form.addEventListener("submit", guardarResposta);
 groupFilter.addEventListener("change", renderPanel);
 
-function guardarResposta(event) {
+async function iniciarApp() {
+  if (!supabaseClient) {
+    showMessage("Falta configurar Supabase. Copia config.example.js a config.js i posa la URL i anon key.", false);
+    renderPanel();
+    return;
+  }
+
+  await carregarRespostes();
+}
+
+async function carregarRespostes() {
+  setLoading(true);
+
+  const { data, error } = await supabaseClient
+    .from("respostes")
+    .select("id, grup, puntuacio, comentari, created_at")
+    .order("created_at", { ascending: false });
+
+  setLoading(false);
+
+  if (error) {
+    showMessage(`Error carregant dades: ${error.message}`, false);
+    renderPanel();
+    return;
+  }
+
+  respostes = data.map(normalitzarResposta);
+  showMessage("", true);
+  renderPanel();
+}
+
+async function guardarResposta(event) {
   event.preventDefault();
+
+  if (!supabaseClient) {
+    showMessage("No es pot guardar: Supabase no esta configurat.", false);
+    return;
+  }
 
   const grup = groupInput.value;
   const puntuacio = Number(scoreInput.value);
@@ -79,29 +87,47 @@ function guardarResposta(event) {
     return;
   }
 
-  const novaResposta = {
-    id: getNextId(),
-    grup,
-    puntuacio,
-    comentari,
-    data: new Date().toISOString()
-  };
+  setLoading(true);
 
-  respostes.push(novaResposta);
+  const { error } = await supabaseClient
+    .from("respostes")
+    .insert({
+      grup,
+      puntuacio,
+      comentari: comentari || null
+    });
+
+  setLoading(false);
+
+  if (error) {
+    showMessage(`Error guardant resposta: ${error.message}`, false);
+    return;
+  }
+
   form.reset();
   groupInput.value = grup;
-  showMessage("Resposta guardada correctament.", true);
-  renderPanel();
+  showMessage("Resposta guardada a Supabase correctament.", true);
+  await carregarRespostes();
+}
+
+function normalitzarResposta(resposta) {
+  return {
+    id: resposta.id,
+    grup: resposta.grup,
+    puntuacio: Number(resposta.puntuacio),
+    comentari: resposta.comentari || "",
+    data: resposta.created_at
+  };
+}
+
+function setLoading(isLoading) {
+  submitButton.disabled = isLoading;
+  submitButton.textContent = isLoading ? "Carregant..." : "Guardar resposta";
 }
 
 function showMessage(text, isOk) {
   formMessage.textContent = text;
   formMessage.classList.toggle("ok", isOk);
-}
-
-function getNextId() {
-  const ids = respostes.map((resposta) => resposta.id);
-  return ids.length ? Math.max(...ids) + 1 : 1;
 }
 
 function filtrarRespostes(grupFiltre) {
@@ -138,8 +164,8 @@ function renderPanel() {
   const distribucio = comptarPuntuacions(dadesFiltrades);
 
   activeFilterText.textContent = filtre === "TOTS"
-    ? "Mostrant totes les respostes"
-    : `Mostrant dades del grup seleccionat al formulari: ${filtre}`;
+    ? "Mostrant totes les respostes de Supabase"
+    : `Mostrant dades de Supabase del grup: ${filtre}`;
 
   totalResponses.textContent = stats.total;
   averageScore.textContent = stats.total ? stats.mitjana.toFixed(1) : "-";
@@ -289,4 +315,4 @@ function escapeHtml(text) {
     .replaceAll("'", "&#039;");
 }
 
-renderPanel();
+iniciarApp();
