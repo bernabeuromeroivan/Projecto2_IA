@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enquesta d'aula - IA4</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="layout">
+    <section class="card form-card" aria-labelledby="form-title">
+      <h1 id="form-title">Formulari d'enquesta</h1>
+
+      <form id="surveyForm">
+        <label for="group">Grup</label>
+        <select id="group" name="group" required>
+          <option value="DAW1A">DAW1A</option>
+          <option value="DAW1B">DAW1B</option>
+          <option value="ASIX1">ASIX1</option>
+        </select>
+
+        <label for="score">Satisfaccio global (1-5)</label>
+        <input id="score" name="score" type="number" min="1" max="5" step="1" required>
+
+        <label for="comment">Comentari (opcional)</label>
+        <textarea id="comment" name="comment" rows="5" placeholder="Que milloraries de la sessio?"></textarea>
+
+        <p id="formMessage" class="message" role="status" aria-live="polite"></p>
+
+        <button type="submit">Guardar resposta</button>
+      </form>
+    </section>
+
+    <section class="card dashboard" aria-labelledby="dashboard-title">
+      <div class="dashboard-header">
+        <div>
+          <h2 id="dashboard-title">Panell d'analitica</h2>
+          <p id="activeFilterText">Mostrant totes les respostes</p>
+        </div>
+
+        <div class="filter">
+          <label for="groupFilter">Filtre del panell</label>
+          <select id="groupFilter" name="groupFilter">
+            <option value="TOTS">Tots</option>
+            <option value="DAW1A">DAW1A</option>
+            <option value="DAW1B">DAW1B</option>
+            <option value="ASIX1">ASIX1</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="kpis" aria-label="Indicadors principals">
+        <article class="kpi">
+          <span>Respostes</span>
+          <strong id="totalResponses">0</strong>
+        </article>
+        <article class="kpi">
+          <span>Mitjana</span>
+          <strong id="averageScore">-</strong>
+        </article>
+        <article class="kpi">
+          <span>% 4 o 5</span>
+          <strong id="positivePercent">0%</strong>
+        </article>
+        <article class="kpi">
+          <span>Grup analitzat</span>
+          <strong id="analyzedGroup">Tots</strong>
+        </article>
+      </div>
+
+      <section class="panel-section" aria-labelledby="bars-title">
+        <h3 id="bars-title">Distribucio de valoracions</h3>
+        <div id="barChart" class="bar-chart"></div>
+      </section>
+
+      <section class="panel-section">
+        <h3>Grafics de quesito</h3>
+        <div class="pie-grid">
+          <article class="mini-card">
+            <h4>Quesito de puntuacions</h4>
+            <div class="pie-row">
+              <div id="scorePie" class="pie"></div>
+              <ul id="scoreLegend" class="legend"></ul>
+            </div>
+          </article>
+          <article class="mini-card">
+            <h4>Quesito positives (4-5)</h4>
+            <div class="pie-row">
+              <div id="positivePie" class="pie"></div>
+              <ul id="positiveLegend" class="legend"></ul>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="comparison-title">
+        <h3 id="comparison-title">Comparativa de mitjana per grup</h3>
+        <div id="groupComparison" class="comparison"></div>
+      </section>
+
+      <section class="panel-section" aria-labelledby="responses-title">
+        <h3 id="responses-title">Ultimes respostes</h3>
+        <div id="responsesList" class="responses-list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
